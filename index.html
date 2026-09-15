@@ -156,20 +156,109 @@ function seedDemo(){
  REWARD_BANK.slice(0,8).forEach(r=>S.house.rewards.push({...r,id:uid(),active:true,quantity:null}));
  save();
 }
-function houseSVG(pct){
+function houseSVG(model,pct){
  const st=STAGES.indexOf(stageFor(pct))+1;
- const wall=st>=2?"#E5C67A":"#C9CDD0", roof=st>=4?"#B96F58":"#BFC2C5", door=st>=3?"#5A8792":"#B7BABD", win=st>=3?"#9DD4E0":"#C8CBCE", green=st>=4?"#7E9A7B":"#C7CAC7", flower=st>=5?"#C88464":"#C7CAC7";
- return `<svg class="house-svg" viewBox="0 0 440 280" role="img" aria-label="Nosso Lar estágio ${st}">
- <rect width="440" height="280" rx="24" fill="#DDECF2"/><circle cx="365" cy="48" r="25" fill="#F4C860"/>
- <path d="M0 220 Q110 190 220 218 T440 210 V280 H0Z" fill="${green}"/>
- <rect x="100" y="112" width="240" height="120" rx="5" fill="${wall}" stroke="#6D7478" stroke-width="4"/>
- <polygon points="80,120 220,45 360,120" fill="${roof}" stroke="#6D7478" stroke-width="4"/>
- <rect x="195" y="162" width="50" height="70" rx="5" fill="${door}" stroke="#6D7478" stroke-width="4"/>
- <rect x="125" y="145" width="48" height="42" rx="4" fill="${win}" stroke="#6D7478" stroke-width="4"/>
- <rect x="268" y="145" width="48" height="42" rx="4" fill="${win}" stroke="#6D7478" stroke-width="4"/>
- <path d="M149 145v42M125 166h48M292 145v42M268 166h48" stroke="#6D7478" stroke-width="3"/>
- ${st>=4?`<circle cx="70" cy="180" r="34" fill="${green}"/><rect x="66" y="180" width="8" height="55" fill="#8A735A"/><circle cx="375" cy="188" r="30" fill="${green}"/><rect x="371" y="188" width="8" height="45" fill="#8A735A"/>`:``}
- ${st>=5?`<circle cx="47" cy="228" r="7" fill="${flower}"/><circle cx="60" cy="236" r="7" fill="#DDAE61"/><circle cx="382" cy="232" r="7" fill="${flower}"/><circle cx="397" cy="226" r="7" fill="#DDAE61"/>`:``}
+ const key={
+  "Casa Comum":"comum",
+  "Casa de Dois Andares":"dois",
+  "Casa na Árvore":"arvore",
+  "Casa Cogumelo":"cogumelo",
+  "Casa de Praia":"praia",
+  "Casa de Brinquedo":"brinquedo"
+ }[model]||"comum";
+
+ const gray="#B9B2A4";
+ const wall=st>=2?({
+   comum:"#E7C79A",dois:"#D9CBB6",arvore:"#C9A06B",cogumelo:"#E8B9C9",praia:"#BFD9E0",brinquedo:"#E7C79A"
+ }[key]):gray;
+ const door=st>=3?({
+   comum:"#8A5A3B",dois:"#5B5346",arvore:"#6E4A2E",cogumelo:"#8A5A6B",praia:"#3B6E82",brinquedo:"#3B6E82"
+ }[key]):"#8b8b8b";
+ const win=st>=3?"#F3E7C9":"#c7c7c7";
+ const roof=st>=4?({
+   comum:"#8FA88C",dois:"#7E8A91",arvore:"#6E8A72",cogumelo:"#D98B6D",praia:"#2C4A5E",brinquedo:"#C88464"
+ }[key]):"#9a9a9a";
+ const foliage=st>=5?"#6E8A72":(st>=4?"#B7B7B7":"none");
+ const flower=st>=5?"#D98B6D":"none";
+ const flower2=st>=5?"#F0C86E":"none";
+ const ground=st>=2?"#EDE1C9":"#cfcabf";
+ let body="";
+
+ if(key==="comum"){
+   body=`
+   <rect x="30" y="205" width="380" height="18" rx="9" fill="${ground}"/>
+   <rect x="95" y="110" width="250" height="110" rx="8" fill="${wall}"/>
+   <polygon points="75,115 220,35 365,115" fill="${roof}"/>
+   <rect x="195" y="155" width="50" height="65" rx="5" fill="${door}"/>
+   <rect x="125" y="140" width="48" height="42" rx="4" fill="${win}"/>
+   <rect x="270" y="140" width="48" height="42" rx="4" fill="${win}"/>
+   ${foliage!=="none"?`<circle cx="70" cy="185" r="28" fill="${foliage}"/><circle cx="375" cy="188" r="25" fill="${foliage}"/>`:``}
+   ${flower!=="none"?`<circle cx="58" cy="207" r="7" fill="${flower}"/><circle cx="82" cy="213" r="7" fill="${flower2}"/><circle cx="366" cy="211" r="7" fill="${flower}"/>`:``}`;
+ } else if(key==="dois"){
+   body=`
+   <rect x="28" y="210" width="384" height="16" rx="8" fill="${ground}"/>
+   <rect x="100" y="100" width="245" height="120" rx="7" fill="${wall}"/>
+   <rect x="135" y="58" width="170" height="82" rx="7" fill="${wall}"/>
+   <polygon points="118,66 220,15 322,66" fill="${roof}"/>
+   <rect x="194" y="158" width="52" height="62" rx="5" fill="${door}"/>
+   <rect x="148" y="78" width="42" height="36" rx="4" fill="${win}"/>
+   <rect x="250" y="78" width="42" height="36" rx="4" fill="${win}"/>
+   <rect x="125" y="145" width="42" height="36" rx="4" fill="${win}"/>
+   <rect x="273" y="145" width="42" height="36" rx="4" fill="${win}"/>
+   ${foliage!=="none"?`<circle cx="72" cy="190" r="26" fill="${foliage}"/><circle cx="374" cy="190" r="26" fill="${foliage}"/>`:``}
+   ${flower!=="none"?`<circle cx="65" cy="214" r="6" fill="${flower}"/><circle cx="84" cy="214" r="6" fill="${flower2}"/><circle cx="379" cy="214" r="6" fill="${flower}"/>`:``}`;
+ } else if(key==="arvore"){
+   body=`
+   <rect x="208" y="92" width="26" height="132" rx="8" fill="#8A6A45"/>
+   ${foliage!=="none"?`<circle cx="220" cy="73" r="74" fill="${foliage}"/>`:`<circle cx="220" cy="73" r="74" fill="none" stroke="${gray}" stroke-width="6"/>`}
+   <rect x="135" y="95" width="170" height="86" rx="12" fill="${wall}"/>
+   <polygon points="120,103 220,48 320,103" fill="${roof}"/>
+   <rect x="201" y="132" width="38" height="49" rx="5" fill="${door}"/>
+   <rect x="157" y="122" width="35" height="31" rx="4" fill="${win}"/>
+   <rect x="248" y="122" width="35" height="31" rx="4" fill="${win}"/>
+   <line x1="305" y1="150" x2="350" y2="220" stroke="#8A6A45" stroke-width="6"/>
+   <line x1="325" y1="180" x2="360" y2="180" stroke="#8A6A45" stroke-width="5"/>
+   ${flower!=="none"?`<circle cx="170" cy="51" r="6" fill="${flower}"/><circle cx="268" cy="43" r="6" fill="${flower2}"/>`:``}`;
+ } else if(key==="cogumelo"){
+   body=`
+   <rect x="34" y="210" width="372" height="16" rx="8" fill="${ground}"/>
+   <rect x="180" y="117" width="82" height="100" rx="28" fill="${wall}"/>
+   <path d="M105 120 Q220 8 335 120 Z" fill="${roof}"/>
+   ${st>=4?`<circle cx="155" cy="80" r="13" fill="#fff" opacity=".7"/><circle cx="220" cy="52" r="11" fill="#fff" opacity=".7"/><circle cx="288" cy="88" r="12" fill="#fff" opacity=".7"/>`:``}
+   <rect x="207" y="157" width="30" height="60" rx="8" fill="${door}"/>
+   <circle cx="190" cy="144" r="15" fill="${win}"/>
+   <circle cx="250" cy="144" r="15" fill="${win}"/>
+   ${foliage!=="none"?`<circle cx="96" cy="193" r="26" fill="${foliage}"/><circle cx="346" cy="190" r="24" fill="${foliage}"/>`:``}
+   ${flower!=="none"?`<circle cx="88" cy="212" r="7" fill="${flower}"/><circle cx="107" cy="218" r="7" fill="${flower2}"/><circle cx="354" cy="214" r="7" fill="${flower}"/>`:``}`;
+ } else if(key==="praia"){
+   body=`
+   <path d="M20 215 Q80 198 140 215 T260 215 T420 210" stroke="${st>=2?"#8FC6D9":gray}" stroke-width="13" fill="none"/>
+   <rect x="110" y="105" width="225" height="105" rx="8" fill="${wall}"/>
+   <polygon points="85,110 222,35 360,110" fill="${roof}"/>
+   <rect x="198" y="151" width="48" height="59" rx="5" fill="${door}"/>
+   <circle cx="151" cy="145" r="18" fill="${win}"/>
+   <circle cx="291" cy="145" r="18" fill="${win}"/>
+   <rect x="115" y="205" width="220" height="9" rx="4" fill="#A98A65"/>
+   ${foliage!=="none"?`<circle cx="362" cy="182" r="28" fill="${foliage}"/>`:``}
+   ${flower!=="none"?`<circle cx="350" cy="209" r="7" fill="${flower}"/><circle cx="372" cy="213" r="7" fill="${flower2}"/>`:``}`;
+ } else {
+   body=`
+   <rect x="35" y="210" width="370" height="16" rx="8" fill="${ground}"/>
+   <rect x="110" y="110" width="225" height="106" rx="14" fill="${wall}"/>
+   <polygon points="90,118 220,45 355,118" fill="${roof}"/>
+   <rect x="194" y="158" width="52" height="58" rx="8" fill="${door}"/>
+   <rect x="132" y="140" width="44" height="38" rx="8" fill="${win}"/>
+   <rect x="266" y="140" width="44" height="38" rx="8" fill="${win}"/>
+   ${st>=4?`<circle cx="102" cy="97" r="11" fill="#E1B55B"/><circle cx="335" cy="96" r="11" fill="#7E9A7B"/>`:``}
+   ${foliage!=="none"?`<circle cx="77" cy="191" r="24" fill="${foliage}"/><circle cx="370" cy="192" r="24" fill="${foliage}"/>`:``}
+   ${flower!=="none"?`<circle cx="68" cy="214" r="7" fill="${flower}"/><circle cx="86" cy="219" r="7" fill="${flower2}"/><circle cx="375" cy="216" r="7" fill="${flower}"/>`:``}`;
+ }
+
+ const filter=st===1?'filter="grayscale(1)" opacity=".92"':'';
+ return `<svg class="house-svg" viewBox="0 0 440 260" xmlns="http://www.w3.org/2000/svg" ${filter}>
+   <rect width="440" height="260" rx="24" fill="#DDECF2"/>
+   <circle cx="370" cy="47" r="24" fill="#F4C860"/>
+   ${body}
  </svg>`;
 }
 function header(){
@@ -220,7 +309,7 @@ function todayScreen(){
  ${swaps?`<div class="listrow"><b>${swaps} proposta(s) de troca</b><button class="btn primary small right" onclick="openModal('swaps')">Ver</button></div>`:''}
  ${sugs?`<div class="listrow"><b>${sugs} sugestão(ões) de recompensa</b><button class="btn primary small right" onclick="openModal('suggestions')">Ver</button></div>`:''}
  </div></div>`:''}
- <div class="section"><h2>Nosso Lar</h2><div class="card soft" onclick="go('lar')"><div class="house-wrap">${houseSVG(pct)}</div>
+ <div class="section"><h2>Nosso Lar</h2><div class="card soft" onclick="go('lar')"><div class="house-wrap">${houseSVG(S.house.model,pct)}</div>
  <div class="section-head" style="margin-top:10px"><b>${pct}% — ${stage.name}</b><span class="meta">esta semana</span></div><div class="progress"><span style="width:${pct}%"></span></div></div></div>
  <div class="section"><h2>Seu progresso</h2><div class="card"><div class="section-head"><b>Nível ${li.lvl}</b><span class="meta">${me.xp} / ${li.next} XP</span></div><div class="progress"><span style="width:${li.pct}%"></span></div><div class="meta" style="margin-top:8px">${Math.max(0,li.next-me.xp)} XP para o próximo nível</div></div></div>
  </div>`;
@@ -240,10 +329,10 @@ function tasksScreen(){
 function larScreen(){
  const pct=currentWeekScore(),st=stageFor(pct),idx=STAGES.indexOf(st);
  return `<div class="main"><div class="section-head"><h2>Nosso Lar</h2><span class="pill">${S.house.model}</span></div>
- <div class="card"><div class="house-wrap">${houseSVG(pct)}</div><div style="text-align:center;margin-top:12px"><div style="font-size:32px;font-weight:900;color:var(--blue)">${pct}%</div><div style="font-weight:800">${st.name}</div><div class="meta">Participação desta semana</div></div><div class="progress"><span style="width:${pct}%"></span></div>
+ <div class="card"><div class="house-wrap">${houseSVG(S.house.model,pct)}</div><div style="text-align:center;margin-top:12px"><div style="font-size:32px;font-weight:900;color:var(--blue)">${pct}%</div><div style="font-weight:800">${st.name}</div><div class="meta">Participação desta semana</div></div><div class="progress"><span style="width:${pct}%"></span></div>
  <div class="stage-row">${STAGES.map((x,i)=>`<div class="stage ${i===idx?'active':''}">${i+1}<br>${x.min}–${x.max}%</div>`).join('')}</div></div>
  <div class="notice"><b>Manter é tão importante quanto construir.</b><br>O Lar considera o peso das tarefas previstas e concluídas. A regressão visual deve ser gradual.</div>
- <div class="section"><h2>Modelos da Casa</h2><div class="grid">${HOUSE_MODELS.map(m=>`<button class="category" onclick="setHouseModel('${m.replaceAll("'","\'")}')">${m}${S.house.model===m?' ✓':''}</button>`).join('')}</div></div>
+ <div class="section"><h2>Modelos da Casa</h2><div class="grid">${HOUSE_MODELS.map(m=>`<button class="category" style="padding:8px" onclick="setHouseModel('${m.replaceAll("'","\'")}')"><div style="height:110px;overflow:hidden;border-radius:14px">${houseSVG(m,100)}</div><div style="margin-top:7px">${m}${S.house.model===m?' ✓':''}</div></button>`).join('')}</div></div>
  </div>`;
 }
 function gameScreen(){
