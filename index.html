@@ -137,6 +137,20 @@ button{cursor:pointer}
 @media(max-width:430px){.nav button{font-size:9px}.nav .ico{font-size:17px}}
 </style>
 
+
+<style>
+.task-library-list{display:grid;gap:10px;margin-top:14px}
+.task-library-item{position:relative;width:100%;border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px 38px 14px 14px;text-align:left;cursor:pointer;font:inherit;color:inherit;box-shadow:0 2px 10px rgba(31,58,74,.04)}
+.task-library-item:hover{border-color:var(--sage);background:#fbfcfa}
+.task-library-main b{font-size:15px;color:var(--blue)}
+.task-library-item .desc{margin-top:4px}
+.task-library-item .pills{margin-top:9px}
+.task-library-arrow{position:absolute;right:15px;top:50%;transform:translateY(-50%);font-size:30px;color:var(--sage)}
+.selected-task-banner{background:#f1f4ee;border:1px solid #dce5d8;border-radius:16px;padding:13px 14px;margin:10px 0 14px}
+.selected-task-banner>span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--sage);font-weight:700;margin-bottom:4px}
+.selected-task-banner>b{color:var(--blue);font-size:17px}
+</style>
+
 </head>
 <body>
 <div id="root"></div>
@@ -652,12 +666,23 @@ function approve(id){const o=S.house.occurrences.find(x=>x.id===id),t=S.house.ta
 function rejectOcc(id){const o=S.house.occurrences.find(x=>x.id===id),t=S.house.tasks.find(x=>x.id===o.taskId),who=o.claimedBy||o.assigneeId;o.status="pendente";notify(who,"rejected",`"${t.name}" foi recusada. Revise e conclua novamente.`);save();closeModal();render()}
 function openTaskPicker(){
  const cats=[...new Set(TASK_BANK.map(x=>x.category))];
- const h=`<h2>Biblioteca de Tarefas</h2><div class="desc">Escolha um setor. As tarefas já vêm com XP, Merrecas e configurações sugeridas, mas você poderá alterar.</div><div class="grid" style="margin-top:12px">${cats.map(c=>`<button class="category" onclick="showTaskCategory('${c}')">${c}</button>`).join('')}</div><div class="actions"><button class="btn ghost" onclick="closeModal();openTaskForm()">Criar tarefa personalizada</button></div>`;
+ const h=`<h2>Biblioteca de Tarefas</h2>
+ <div class="desc">Escolha primeiro o ambiente. Depois toque diretamente na tarefa que deseja cadastrar.</div>
+ <div class="grid" style="margin-top:12px">${cats.map(c=>`<button class="category" onclick="showTaskCategory('${c.replaceAll("'","\\'")}')">${c}</button>`).join('')}</div>
+ <div class="actions"><button class="btn ghost" onclick="closeModal();openTaskForm()">+ Criar tarefa do zero</button></div>`;
  document.body.insertAdjacentHTML("beforeend",`<div class="modal" id="modal"><div class="sheet"><button class="close" onclick="closeModal()">×</button>${h}</div></div>`);
 }
 function showTaskCategory(cat){
- closeModal();const list=TASK_BANK.filter(x=>x.category===cat);
- const h=`<h2>${cat}</h2><div class="desc">Selecione quantas tarefas quiser.</div><div id="bank-list">${list.map(x=>`<label class="checkrow"><input type="checkbox" class="tbchk" value="${x.id}"><div><b>${x.name}</b><div class="desc">${x.description}</div><div class="pills"><span class="pill xp">${x.xp} XP</span><span class="pill coin">${x.merrecas} Merrecas</span><span class="pill">${x.type}</span></div></div></label>`).join('')}</div><button class="btn primary" style="width:100%" onclick="configureSelectedTasks()">Continuar</button>`;
+ closeModal();
+ const list=TASK_BANK.filter(x=>x.category===cat);
+ const h=`<h2>${cat}</h2>
+ <div class="desc">Toque em uma tarefa. Na próxima tela você escolhe para quem, se será fixa ou rotativa e a frequência.</div>
+ <div class="task-library-list">${list.map(x=>`<button class="task-library-item" onclick="openTaskFromBank('${x.id}')">
+   <div class="task-library-main"><b>${x.name}</b><div class="desc">${x.description}</div></div>
+   <div class="pills"><span class="pill xp">⭐ ${x.xp}</span><span class="pill coin">🪙 ${x.merrecas}</span><span class="pill">${x.recurrence}</span></div>
+   <span class="task-library-arrow">›</span>
+ </button>`).join('')}</div>
+ <div class="actions"><button class="btn ghost" onclick="closeModal();openTaskPicker()">← Voltar aos ambientes</button></div>`;
  document.body.insertAdjacentHTML("beforeend",`<div class="modal" id="modal"><div class="sheet"><button class="close" onclick="closeModal()">×</button>${h}</div></div>`);
 }
 function configureSelectedTasks(){
@@ -680,10 +705,29 @@ function saveSelectedTasks(){
  });
  save();closeModal();render();toast("Tarefas adicionadas!");
 }
-function openTaskForm(editId=null){
+
+function scheduleForBankTask(b){
+ const r=(b?.recurrence||'').toLowerCase();
+ if(r==='diaria')return{kind:'interval',start:today(),every:1,unit:'day'};
+ if(r==='semanal')return{kind:'interval',start:today(),every:1,unit:'week'};
+ if(r==='quinzenal')return{kind:'interval',start:today(),every:15,unit:'day'};
+ if(r==='mensal')return{kind:'interval',start:today(),every:1,unit:'month'};
+ if(r==='bimestral')return{kind:'interval',start:today(),every:2,unit:'month'};
+ if(r==='trimestral')return{kind:'interval',start:today(),every:3,unit:'month'};
+ if(r==='semestral')return{kind:'interval',start:today(),every:6,unit:'month'};
+ if(r==='anual')return{kind:'interval',start:today(),every:1,unit:'year'};
+ return{kind:'once',start:today()};
+}
+function openTaskFromBank(bankId){
  closeModal();
- const t=editId?S.house.tasks.find(x=>x.id===editId):null;
- const users=activeUsers(), s=t?.schedule||{kind:"once",start:today()};
+ openTaskForm(null,bankId);
+}
+function openTaskForm(editId=null,bankId=null){
+ closeModal();
+ const existing=editId?S.house.tasks.find(x=>x.id===editId):null;
+ const bank=bankId?TASK_BANK.find(x=>x.id===bankId):null;
+ const t=existing||bank||null;
+ const users=activeUsers(), s=existing?.schedule||(bank?scheduleForBankTask(bank):{kind:"once",start:today()});
  let freq="once";
  if(s.kind==="specific_days")freq="specific_days";
  if(s.kind==="interval"){
@@ -693,8 +737,10 @@ function openTaskForm(editId=null){
  }
  const chk=(ids,id)=>(ids||[]).includes(id)?"checked":"";
  const dayChk=d=>(s.days||[]).includes(d)?"checked":"";
- const h=`<h2>${t?"Editar tarefa":"Nova tarefa"}</h2>
- <input type="hidden" id="ct-edit-id" value="${t?.id||""}">
+ const h=`<h2>${existing?"Editar tarefa":bank?"Configurar tarefa":"Nova tarefa"}</h2>
+ ${bank?`<div class="selected-task-banner"><span>✓ Tarefa selecionada</span><b>${bank.name}</b><div class="desc">Agora escolha quem fará, o tipo e a frequência.</div></div>`:""}
+ <input type="hidden" id="ct-edit-id" value="${existing?.id||""}">
+ <input type="hidden" id="ct-bank-id" value="${bank?.id||""}">
  <div class="field"><label>Nome</label><input id="ct-name" value="${(t?.name||"").replaceAll('"','&quot;')}" placeholder="Ex.: Arrumar o guarda-roupa"></div>
  <div class="field"><label>Descrição</label><textarea id="ct-desc">${t?.description||""}</textarea></div>
  <div class="field"><label>Tipo</label><select id="ct-type" onchange="updateTaskTypeUI()">
@@ -732,13 +778,14 @@ function openTaskForm(editId=null){
 function saveCustomTask(){
  const name=document.getElementById("ct-name").value.trim();if(!name)return alert("Informe o nome da tarefa.");
  const type=document.getElementById("ct-type").value,editId=document.getElementById("ct-edit-id").value||null;
+ const bankId=document.getElementById("ct-bank-id")?.value||null,bank=bankId?TASK_BANK.find(x=>x.id===bankId):null;
  let schedule;try{schedule=scheduleFromForm()}catch(e){return alert(e.message)}
  const rotation=[...document.querySelectorAll(".ct-rotation:checked")].map(x=>x.value);
  const collective=[...document.querySelectorAll(".ct-collective:checked")].map(x=>x.value);
  if(type==="rotativa"&&!rotation.length)return alert("Escolha pelo menos um morador para a rotação.");
  if(type==="coletiva"&&!collective.length)return alert("Escolha pelo menos um participante.");
  let t=editId?S.house.tasks.find(x=>x.id===editId):null;
- if(!t){t={id:uid(),category:"Personalizada",active:true};S.house.tasks.push(t)}
+ if(!t){t={id:uid(),category:bank?.category||"Personalizada",effort:bank?.effort||"media",active:true};S.house.tasks.push(t)}
  Object.assign(t,{
    name,description:document.getElementById("ct-desc").value.trim(),type,
    schedule,recurrence:taskFrequencyLabel({schedule}),
